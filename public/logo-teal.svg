@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="121px" height="49px" viewBox="0 0 121 49" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Horizontal/GMW-Teal</title>
+    <g id="GMW-Logo" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(-121.000000, -308.000000)" fill="#00C5BD" id="Horizontal/GMW-Teal">
+            <g transform="translate(121.000000, 308.000000)">
+                <text id="Global-Mangrove-Watc" font-family="OpenSans-Bold, Open Sans" font-size="13" font-weight="bold" line-spacing="11">
+                    <tspan x="45" y="20">GLOBAL</tspan>
+                    <tspan x="45" y="31">MANGROVE</tspan>
+                    <tspan x="45" y="42">WATCH</tspan>
+                </text>
+                <g id="Group-43">
+                    <circle id="Oval" cx="18.1500004" cy="45.650001" r="2.75000006"></circle>
+                    <circle id="Oval" cx="18.1500004" cy="4.95000011" r="4.95000011"></circle>
+                    <circle id="Oval" cx="6.60000014" cy="12.0000002" r="4.4000001"></circle>
+                    <circle id="Oval" cx="3.85000008" cy="24.7500005" r="3.85000008"></circle>
+                    <circle id="Oval" cx="11.0000002" cy="36.3000008" r="3.30000007"></circle>
+                    <circle id="Oval" cx="26.4000006" cy="36.3000008" r="3.30000007"></circle>
+                    <circle id="Oval" cx="29.7000006" cy="12.0000002" r="4.4000001"></circle>
+                    <circle id="Oval" cx="32.4500007" cy="24.7500005" r="3.85000008"></circle>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

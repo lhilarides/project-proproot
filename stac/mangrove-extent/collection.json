@@ -1,0 +1,92 @@
+{
+  "type": "Collection",
+  "id": "mangrove-extent",
+  "stac_version": "1.1.0",
+  "description": "Global Mangrove Watch Version 4 Extent COGs. Annual timeseries covering 1985 - 2025 at a 30m resolution.",
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "GMW v4 STAC Catalog"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1985/mangrove-extent-1985.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1986/mangrove-extent-1986.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1987/mangrove-extent-1987.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1988/mangrove-extent-1988.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1989/mangrove-extent-1989.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1990/mangrove-extent-1990.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1991/mangrove-extent-1991.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1992/mangrove-extent-1992.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1993/mangrove-extent-1993.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-1994/mangrove-extent-1994.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json",
+      "title": "GMW v4 STAC Catalog"
+    }
+  ],
+  "title": "Mangrove Extent v4 (1985-2025)",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          -180.0,
+          -39.0,
+          180.0,
+          35.0
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "1985-01-01T00:00:00Z",
+          "1994-01-01T00:00:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "other"
+}
