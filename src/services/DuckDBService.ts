@@ -118,3 +118,43 @@ export async function getCountryList(): Promise<{ iso: string, name: string }[]>
     await conn.close();
   }
 }
+
+export async function getCountryBBox(iso: string): Promise<[number, number, number, number] | null> {
+  const db = await initDuckDB();
+  const conn = await db.connect();
+  const parquetUrl = 'https://storage.googleapis.com/gmw-mvp-datalake-project-proproot/parquets/gmw_openstreetmap_country_boundaries_20250320_fixed.parquet';
+
+  if (!spatialLoaded) {
+    await conn.query(`SELECT 1 FROM read_parquet('${parquetUrl}') LIMIT 1`);
+    await conn.query("INSTALL spatial; LOAD spatial;");
+    spatialLoaded = true;
+  }
+
+  const query = `
+    SELECT 
+      MIN(ST_XMin(geometry::GEOMETRY)) as min_x,
+      MIN(ST_YMin(geometry::GEOMETRY)) as min_y,
+      MAX(ST_XMax(geometry::GEOMETRY)) as max_x,
+      MAX(ST_YMax(geometry::GEOMETRY)) as max_y
+    FROM read_parquet('${parquetUrl}')
+    WHERE iso3cd = '${iso}'
+  `;
+
+  try {
+    const result = await conn.query(query);
+    const arr = result.toArray();
+    if (arr.length > 0 && arr[0].min_x !== null) {
+      return [
+        Number(arr[0].min_x),
+        Number(arr[0].min_y),
+        Number(arr[0].max_x),
+        Number(arr[0].max_y)
+      ];
+    }
+  } catch (e) {
+    console.error("Failed to get bbox from DuckDB", e);
+  } finally {
+    await conn.close();
+  }
+  return null;
+}

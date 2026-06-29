@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import MapComponent from './components/Map';
-import NationalDashboard from './components/NationalDashboard';
+import DashboardPanel from './components/DashboardPanel';
 import CountrySearch from './components/CountrySearch';
 import { fetchStacExtentMetadata } from './services/stac';
 import type { StacYearData } from './services/stac';
@@ -15,7 +15,7 @@ function App() {
   });
   
   const [year, setYear] = useState(1985);
-  const [basemap, setBasemap] = useState('dark');
+  const [basemap, setBasemap] = useState('voyager');
   const [stacYears, setStacYears] = useState<StacYearData[]>([]);
 
   useEffect(() => {
@@ -40,16 +40,23 @@ function App() {
             <img src="/logo-white.svg" alt="Global Mangrove Watch" style={{ height: '40px', width: 'auto', maxWidth: '100%', objectFit: 'contain' }} />
           </div>
 
+          <CountrySearch />
+
+          <Routes>
+            <Route path="/" element={<DashboardPanel />} />
+            <Route path="/country/:iso" element={<DashboardPanel />} />
+          </Routes>
+
           <div className="panel-section">
             <h2>Basemap</h2>
             <div className="basemap-selector">
-              {['dark', 'light', 'satellite'].map((b) => (
+              {['voyager', 'satellite'].map((b) => (
                 <button 
                   key={b}
                   className={`basemap-btn ${basemap === b ? 'active' : ''}`}
                   onClick={() => setBasemap(b)}
                 >
-                  {b.charAt(0).toUpperCase() + b.slice(1)}
+                  {b === 'voyager' ? 'Carto Voyager' : 'ESRI Satellite'}
                 </button>
               ))}
             </div>
@@ -57,7 +64,15 @@ function App() {
           
           <div className="panel-section">
             <h2>Timeline</h2>
-            <div className="timeline-container">
+            <div className="timeline-container" style={{ position: 'relative', marginTop: '24px', paddingBottom: '20px' }}>
+              <div 
+                className="timeline-knob-tooltip" 
+                style={{ 
+                  left: `calc(${maxYear === minYear ? 0 : ((year - minYear) / (maxYear - minYear)) * 100}% + 8px - ${maxYear === minYear ? 0 : ((year - minYear) / (maxYear - minYear)) * 16}px)` 
+                }}
+              >
+                {year}
+              </div>
               <input 
                 type="range" 
                 min={minYear} 
@@ -66,10 +81,17 @@ function App() {
                 onChange={(e) => setYear(parseInt(e.target.value))}
                 className="timeline-slider"
               />
-              <div className="timeline-labels">
-                <span>{minYear}</span>
-                <span className="current-year">{year}</span>
-                <span>{maxYear}</span>
+              <div className="timeline-ticks">
+                {Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i).map(y => {
+                  if (y % 5 === 0 || y === minYear || y === maxYear) {
+                    return (
+                      <div key={y} className="timeline-tick" style={{ left: `${maxYear === minYear ? 0 : ((y - minYear) / (maxYear - minYear)) * 100}%` }}>
+                        <span className="tick-label">{y}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
               </div>
             </div>
           </div>
@@ -117,13 +139,6 @@ function App() {
           {/* Adding key={basemap} forces React to cleanly remount MapLibre, preserving layers because Map.tsx restores from URL hash! */}
           <MapComponent key={basemap} activeLayers={layers} year={year} basemap={basemap} stacYears={stacYears} />
         </main>
-        
-        {/* National Dashboard Overlay */}
-        <CountrySearch />
-        <Routes>
-          <Route path="/" element={null} />
-          <Route path="/country/:iso" element={<NationalDashboard />} />
-        </Routes>
       </div>
     </HashRouter>
   );

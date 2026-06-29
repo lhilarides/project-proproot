@@ -27,7 +27,7 @@ gcloud run deploy titiler \
   --platform managed \
   --region $REGION \
   --allow-unauthenticated \
-  --set-env-vars="CPL_VSIL_CURL_ALLOWED_EXTENSIONS=.tif,.tiff,.vrt"
+  --set-env-vars="CPL_VSIL_CURL_ALLOWED_EXTENSIONS=.tif,.tiff,.vrt,TITILER_API_CORS_ALLOW_METHODS=*"
 
 echo "Setup Complete!"
 echo "Your bucket: gs://$BUCKET_NAME"

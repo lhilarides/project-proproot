@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Protocol } from 'pmtiles';
@@ -30,18 +30,7 @@ function getTilesForBBox(minLng: number, minLat: number, maxLng: number, maxLat:
 }
 
 const BASEMAPS: Record<string, any> = {
-  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  light: {
-    version: 8,
-    sources: {
-      osm: {
-        type: 'raster',
-        tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-        tileSize: 256
-      }
-    },
-    layers: [{ id: 'osm-layer', type: 'raster', source: 'osm' }]
-  },
+  voyager: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
   satellite: {
     version: 8,
     sources: {
@@ -56,6 +45,7 @@ const BASEMAPS: Record<string, any> = {
 };
 
 import type { StacYearData } from '../services/stac';
+import { getCountryBBox } from '../services/DuckDBService';
 
 interface MapProps {
   activeLayers: {
@@ -68,9 +58,45 @@ interface MapProps {
   stacYears: StacYearData[];
 }
 
+function getInsertBeforeId(map: maplibregl.Map | null, currentLayerType: 'extent' | 'boundaries' | 'alerts') {
+  if (!map) return undefined;
+  
+  // Define strict ordering (from lowest to highest)
+  const orderedLayers = [
+    'mangrove-extent-layer-glow',
+    'mangrove-extent-layer',
+    'boundaries-fill',
+    'boundaries-layer',
+    'alerts-layer'
+  ];
+
+  let startIndex = 0;
+  if (currentLayerType === 'extent') startIndex = 2; // Look for boundaries or above
+  else if (currentLayerType === 'boundaries') startIndex = 4; // Look for alerts or above
+  else if (currentLayerType === 'alerts') startIndex = 5; // Look for symbols/draw
+
+  // 1. Check if any higher specific layers exist
+  for (let i = startIndex; i < orderedLayers.length; i++) {
+    if (map.getLayer(orderedLayers[i])) return orderedLayers[i];
+  }
+
+  const layers = map.getStyle().layers || [];
+  
+  // 2. First, always try to place underneath user-drawn TerraDraw layers
+  const drawLayer = layers.find(l => l.id.startsWith('td-') || l.id.includes('terradraw') || l.id.includes('draw'));
+  if (drawLayer) return drawLayer.id;
+  
+  // 3. Otherwise, try to place underneath text labels (symbol layers) so maps look beautiful
+  const symbolLayer = layers.find(l => l.type === 'symbol');
+  if (symbolLayer) return symbolLayer.id;
+  
+  return undefined;
+}
+
 
 export default function MapComponent({ activeLayers, year, basemap, stacYears }: MapProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -139,21 +165,28 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
       // Ignore if already registered
     }
 
-    // Manually parse URL hash to prevent MapLibre's built-in hash from wiping the URL on unmount
+    // Parse URL hash to prevent MapLibre's built-in hash from wiping the URL on unmount
     let initialCenter: [number, number] = [0, 20];
     let initialZoom = 2.5;
     
-    if (window.location.hash) {
-      const parts = window.location.hash.replace('#', '').split('/');
-      if (parts.length >= 3) {
-        initialZoom = parseFloat(parts[0]);
-        initialCenter = [parseFloat(parts[2]), parseFloat(parts[1])];
+    const hashStr = window.location.hash;
+    const searchParams = new URLSearchParams(hashStr.split('?')[1] || '');
+    
+    if (searchParams.has('z') && searchParams.has('lat') && searchParams.has('lng')) {
+      initialZoom = parseFloat(searchParams.get('z')!);
+      initialCenter = [parseFloat(searchParams.get('lng')!), parseFloat(searchParams.get('lat')!)];
+    } else {
+      // Fallback for old hash format (e.g. #5/1.2/3.4)
+      const oldParts = hashStr.replace('#', '').split('/');
+      if (oldParts.length >= 3 && !isNaN(parseFloat(oldParts[0]))) {
+         initialZoom = parseFloat(oldParts[0]);
+         initialCenter = [parseFloat(oldParts[2]), parseFloat(oldParts[1])];
       }
     }
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: BASEMAPS[basemap] || BASEMAPS['dark'],
+      style: BASEMAPS[basemap] || BASEMAPS['voyager'],
       center: initialCenter,
       zoom: initialZoom,
       attributionControl: false
@@ -165,7 +198,11 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
       if (!map.current) return;
       const center = map.current.getCenter();
       const zoom = map.current.getZoom();
-      window.history.replaceState(null, '', `#${zoom.toFixed(2)}/${center.lat.toFixed(4)}/${center.lng.toFixed(4)}`);
+      
+      const currentHash = window.location.hash || '#/';
+      const pathOnly = currentHash.split('?')[0];
+      
+      window.history.replaceState(null, '', `${pathOnly}?z=${zoom.toFixed(2)}&lat=${center.lat.toFixed(4)}&lng=${center.lng.toFixed(4)}`);
     });
 
     map.current.on('load', () => {
@@ -182,6 +219,21 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
       map.current?.remove();
     };
   }, []);
+
+  // Zoom to country based on URL
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+    
+    const match = location.pathname.match(/^\/country\/([a-zA-Z]{3})$/i);
+    if (match && match[1]) {
+      const iso = match[1].toUpperCase();
+      getCountryBBox(iso).then(bbox => {
+        if (bbox && map.current) {
+          map.current.fitBounds(bbox, { padding: 50, duration: 1000 });
+        }
+      });
+    }
+  }, [location.pathname, mapLoaded]);
 
   // Handle Vector Layer (Boundaries)
   useEffect(() => {
@@ -200,6 +252,8 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
         maxzoom: 6
       });
 
+      const beforeId = getInsertBeforeId(map.current, 'boundaries');
+
       map.current.addLayer({
         id: 'boundaries-fill',
         type: 'fill',
@@ -209,7 +263,7 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
           'fill-color': '#10b981',
           'fill-opacity': 0 // Keep invisible normally, hover states could be added here later
         }
-      });
+      }, beforeId);
 
       map.current.addLayer({
         id: layerId,
@@ -221,7 +275,7 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
           'line-width': 1.5,
           'line-opacity': 0.8
         }
-      });
+      }, beforeId);
 
       // Interactivity
       map.current.on('mouseenter', 'boundaries-fill', () => {
@@ -262,6 +316,8 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
         url: `pmtiles://${pmtilesUrl}`
       });
 
+      const beforeId = getInsertBeforeId(map.current, 'alerts');
+
       map.current.addLayer({
         id: layerId,
         type: 'circle',
@@ -284,7 +340,7 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
           'circle-stroke-width': 0.5,
           'circle-stroke-color': 'rgba(0,0,0,0.5)'
         }
-      });
+      }, beforeId);
       
       // Setup hover interactions if desired
       map.current.on('mouseenter', layerId, () => {
@@ -319,7 +375,8 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
     const layerId = 'mangrove-extent-layer';
 
     if (map.current.getSource(sourceId)) {
-      map.current.removeLayer(layerId);
+      if (map.current.getLayer(layerId)) map.current.removeLayer(layerId);
+      if (map.current.getLayer(layerId + '-glow')) map.current.removeLayer(layerId + '-glow');
       map.current.removeSource(sourceId);
     }
 
@@ -330,7 +387,11 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
         if (match) cogUrl = match.assetUrl;
       }
 
-      const titilerTileUrl = `${TITILER_URL}/cog/tiles/WebMercatorQuad/{z}/{x}/{y}?url=${cogUrl}&bidx=1&rescale=0,1&colormap_name=greens&unscale=true`;
+      // Use a custom colormap mapping value '1' to Teal (#06c4bd)
+      const colormap = '%7B%221%22%3A%22%2306c4bdff%22%7D';
+      
+      // resampling_method=max ensures that 30m pixels don't disappear at global zoom levels!
+      const titilerTileUrl = `${TITILER_URL}/cog/tiles/WebMercatorQuad/{z}/{x}/{y}?url=${cogUrl}&bidx=1&colormap=${colormap}&unscale=true&resampling_method=max`;
 
       map.current.addSource(sourceId, {
         type: 'raster',
@@ -340,14 +401,28 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
         maxzoom: 12 // Prevent oversampling requests; MapLibre will stretch Z12 tiles for deeper zooms
       });
 
-      const beforeId = map.current.getLayer('boundaries-layer') ? 'boundaries-layer' : undefined;
+      const beforeId = getInsertBeforeId(map.current, 'extent');
 
+      // Glow layer (soft, stretched representation)
+      map.current.addLayer({
+        id: layerId + '-glow',
+        type: 'raster',
+        source: sourceId,
+        paint: {
+          'raster-opacity': 0.5,
+          'raster-resampling': 'linear',
+          'raster-fade-duration': 300 
+        }
+      }, beforeId);
+
+      // Core crisp layer
       map.current.addLayer({
         id: layerId,
         type: 'raster',
         source: sourceId,
         paint: {
-          'raster-opacity': 0.8,
+          'raster-opacity': 1.0,
+          'raster-resampling': 'nearest',
           'raster-fade-duration': 300 
         }
       }, beforeId);
@@ -358,36 +433,16 @@ export default function MapComponent({ activeLayers, year, basemap, stacYears }:
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       <div ref={mapContainer} style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0 }} />
-      {mapLoaded && <DrawControls map={map.current} year={year} />}
+      {mapLoaded && (
+        <DrawControls 
+          map={map.current} 
+          year={year} 
+          onCacheOffline={handleTakeOffline} 
+          downloadState={downloadState} 
+          stacYears={stacYears}
+        />
+      )}
       
-      {/* Offline Management UI */}
-      <div style={{ position: 'absolute', bottom: 16, right: 10, zIndex: 10 }}>
-        <button 
-          onClick={handleTakeOffline} 
-          disabled={downloadState === 'downloading' || downloadState === 'ready'}
-          style={{ 
-            background: downloadState === 'ready' ? '#10b981' : 'rgba(15, 23, 42, 0.9)', 
-            color: 'white', 
-            border: '1px solid rgba(255,255,255,0.1)', 
-            backdropFilter: 'blur(10px)',
-            padding: '10px 16px', 
-            borderRadius: '8px', 
-            cursor: 'pointer',
-            opacity: downloadState === 'downloading' ? 0.7 : 1,
-            boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            fontSize: '0.8rem'
-          }}
-        >
-          {downloadState === 'idle' && 'Cache Area Offline'}
-          {downloadState === 'downloading' && 'Caching Tiles...'}
-          {downloadState === 'ready' && 'Area Saved Offline'}
-          {downloadState === 'error' && 'Failed to Cache'}
-        </button>
-      </div>
-
       <PwaBadge />
     </div>
   );

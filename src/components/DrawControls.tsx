@@ -7,9 +7,12 @@ import { initDuckDB, queryParquet } from '../services/DuckDBService';
 interface DrawControlsProps {
   map: maplibregl.Map | null;
   year: number;
+  onCacheOffline?: () => void;
+  downloadState?: 'idle' | 'downloading' | 'ready' | 'error';
+  stacYears?: { year: number; assetUrl: string }[];
 }
 
-export default function DrawControls({ map, year }: DrawControlsProps) {
+export default function DrawControls({ map, year, onCacheOffline, downloadState = 'idle', stacYears = [] }: DrawControlsProps) {
   const drawRef = useRef<TerraDraw | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasPolygon, setHasPolygon] = useState(false);
@@ -89,7 +92,6 @@ export default function DrawControls({ map, year }: DrawControlsProps) {
     const feature = snapshot[0];
     
     // WKT generation for DuckDB
-    // GeoJSON Polygon coordinates are [[[lng, lat], [lng, lat], ...]]
     const rings = feature.geometry.coordinates as number[][][];
     
     const wktRings = rings.map(ring => {
@@ -122,7 +124,6 @@ export default function DrawControls({ map, year }: DrawControlsProps) {
     const snapshot = drawRef.current.getSnapshot();
     if (snapshot.length === 0) return;
 
-    // Convert drawn polygon to WKT
     const feature = snapshot[0];
     const rings = feature.geometry.coordinates as number[][][];
     const wktCoords = rings[0].map((c: number[]) => `${c[0]} ${c[1]}`).join(', ');
@@ -165,29 +166,82 @@ export default function DrawControls({ map, year }: DrawControlsProps) {
 
     setIsRasterExtracting(true);
     try {
-      const httpsRasterUrl = `https://storage.googleapis.com/gmw-mvp-datalake-project-proproot/cogs/gmw_mng_ext_${year}_cog.tif`;
-      const cropUrl = `https://titiler-576283594732.us-central1.run.app/cog/bbox/${minX},${minY},${maxX},${maxY}.tif?url=${encodeURIComponent(httpsRasterUrl)}`;
+      let targetYear = year;
+      let httpsRasterUrl = `https://storage.googleapis.com/gmw-mvp-datalake-project-proproot/cogs/gmw_mng_ext_${year}_cog.tif`;
       
+      if (stacYears && stacYears.length > 0) {
+        const latest = stacYears.reduce((max, curr) => curr.year > max.year ? curr : max, stacYears[0]);
+        targetYear = latest.year;
+        httpsRasterUrl = latest.assetUrl;
+      }
+
+      // Feature extraction using POST to clip exactly to polygon
+      const postUrl = `https://titiler-576283594732.us-central1.run.app/cog/feature.tif?url=${encodeURIComponent(httpsRasterUrl)}`;
+      
+      const response = await fetch(postUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: "Feature",
+          properties: {},
+          geometry: feature.geometry
+        })
+      });
+      
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Failed to extract raster: ${errText}`);
+      }
+      
+      const blob = await response.blob();
       const link = document.createElement('a');
-      link.href = cropUrl;
-      link.target = "_blank";
-      link.download = `mangroves_${year}_crop.tif`;
+      link.href = URL.createObjectURL(blob);
+      link.download = `mangroves_extent_${targetYear}_crop.tif`;
       link.click();
+    } catch(e) {
+      console.error(e);
+      alert("Failed to clip raster. Please try a smaller area or check the console.");
     } finally {
-      // Simulate slight delay for UI feedback
-      setTimeout(() => setIsRasterExtracting(false), 1000);
+      setIsRasterExtracting(false);
     }
   };
 
   if (!map) return null;
 
   return (
-    <div className="draw-controls" style={{ position: 'absolute', bottom: 120, right: 10, zIndex: 10, background: 'rgba(15, 23, 42, 0.9)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '220px' }}>
-      <h3 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 600, letterSpacing: '1px' }}>Extract Data</h3>
+    <div className="draw-controls" style={{ position: 'absolute', bottom: 30, right: 10, zIndex: 10, background: 'rgba(15, 23, 42, 0.9)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '220px' }}>
+      <h3 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 600, letterSpacing: '1px' }}>Map Tools</h3>
       
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        {onCacheOffline && (
+          <button 
+            onClick={onCacheOffline} 
+            disabled={downloadState === 'downloading' || downloadState === 'ready'}
+            style={{ 
+              width: '100%', 
+              background: downloadState === 'ready' ? '#10b981' : 'rgba(255,255,255,0.05)', 
+              color: '#fff', 
+              border: '1px solid rgba(255,255,255,0.1)', 
+              padding: '8px 12px', 
+              borderRadius: 8, 
+              cursor: 'pointer', 
+              fontSize: '0.8rem', 
+              transition: 'all 0.2s', 
+              fontWeight: 500,
+              opacity: downloadState === 'downloading' ? 0.7 : 1
+            }}
+          >
+            {downloadState === 'idle' && 'Cache Data'}
+            {downloadState === 'downloading' && 'Caching Tiles...'}
+            {downloadState === 'ready' && 'Data Cached'}
+            {downloadState === 'error' && 'Failed to Cache'}
+          </button>
+        )}
+
         <button onClick={() => startDrawing('polygon')} style={{ width: '100%', background: isDrawing ? '#10b981' : 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: '0.8rem', transition: 'all 0.2s', fontWeight: 500 }}>
-          {isDrawing ? 'Drawing...' : 'Draw Custom Polygon'}
+          {isDrawing ? 'Drawing...' : 'Extract Data'}
         </button>
       </div>
 
