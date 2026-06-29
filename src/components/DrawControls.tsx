@@ -155,15 +155,7 @@ export default function DrawControls({ map, year, onCacheOffline, downloadState 
     if (snapshot.length === 0) return;
     const feature = snapshot[0];
     
-    // Calculate Bounding Box
-    const rings = feature.geometry.coordinates as number[][][];
-    const coords = rings[0]; // exterior ring
-    const lngs = coords.map((c: number[]) => c[0]);
-    const lats = coords.map((c: number[]) => c[1]);
-    const minX = Math.min(...lngs);
-    const maxX = Math.max(...lngs);
-    const minY = Math.min(...lats);
-    const maxY = Math.max(...lats);
+    // Feature geometry will be passed directly for clipping
 
     setIsRasterExtracting(true);
     try {
@@ -217,7 +209,7 @@ export default function DrawControls({ map, year, onCacheOffline, downloadState 
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
         <a
-          href="https://radiantearth.github.io/stac-browser/#/external/storage.googleapis.com/gmw-mvp-datalake-project-proproot/stac/catalog.json"
+          href="/explorer/index.html"
           target="_blank"
           rel="noreferrer"
           style={{

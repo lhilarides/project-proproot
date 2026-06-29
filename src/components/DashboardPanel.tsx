@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, Map as MapIcon, FileText, Edit2, Save, Globe, FileStack, Database } from 'lucide-react';
+import { Plus, Trash2, Map as MapIcon, FileText, Edit2, Save, Globe, FileStack } from 'lucide-react';
 import { getCountryDocuments, addCountryDocument, deleteCountryDocument, updateCountryDocument } from '../services/firebase';
 import type { CountryDocument } from '../services/firebase';
 import { getCountryList } from '../services/DuckDBService';

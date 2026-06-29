@@ -27,7 +27,7 @@ export default function CountrySearch() {
     ? [] 
     : countries.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
 
-  const handleSelect = (iso: string, name: string) => {
+  const handleSelect = (iso: string) => {
     setQuery('');
     setIsOpen(false);
     navigate(`/country/${iso}`);
@@ -40,12 +40,12 @@ export default function CountrySearch() {
     // Exact match by name or ISO
     const match = countries.find(c => c.iso.toLowerCase() === q || c.name.toLowerCase() === q);
     if (match) {
-      handleSelect(match.iso, match.name);
+      handleSelect(match.iso);
     } else if (q.length === 3) {
-      handleSelect(q.toUpperCase(), '');
+      handleSelect(q.toUpperCase());
     } else if (filteredCountries.length > 0) {
       // Just pick the first one if they press enter
-      handleSelect(filteredCountries[0].iso, filteredCountries[0].name);
+      handleSelect(filteredCountries[0].iso);
     }
   };
 
@@ -91,7 +91,7 @@ export default function CountrySearch() {
           {filteredCountries.map(c => (
             <li 
               key={c.iso}
-              onClick={() => handleSelect(c.iso, c.name)}
+              onClick={() => handleSelect(c.iso)}
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',

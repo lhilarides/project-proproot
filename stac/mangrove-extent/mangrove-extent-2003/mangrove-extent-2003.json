@@ -1,0 +1,72 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [],
+  "id": "mangrove-extent-2003",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -180.0,
+          -39.0
+        ],
+        [
+          180.0,
+          -39.0
+        ],
+        [
+          180.0,
+          35.0
+        ],
+        [
+          -180.0,
+          35.0
+        ],
+        [
+          -180.0,
+          -39.0
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    -180.0,
+    -39.0,
+    180.0,
+    35.0
+  ],
+  "properties": {
+    "datetime": "2003-01-01T00:00:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../catalog.json",
+      "type": "application/json",
+      "title": "GMW v4 STAC Catalog"
+    },
+    {
+      "rel": "collection",
+      "href": "../collection.json",
+      "type": "application/json",
+      "title": "Mangrove Extent v4 (1985-2025)"
+    },
+    {
+      "rel": "parent",
+      "href": "../collection.json",
+      "type": "application/json",
+      "title": "Mangrove Extent v4 (1985-2025)"
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "https://storage.googleapis.com/gmw-mvp-datalake-project-proproot/cogs/gmw_mng_ext_2003_cog.tif",
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "mangrove-extent"
+}

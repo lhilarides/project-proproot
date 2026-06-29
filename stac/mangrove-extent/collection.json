@@ -101,6 +101,81 @@
       "type": "application/geo+json"
     },
     {
+      "rel": "item",
+      "href": "./mangrove-extent-2003/mangrove-extent-2003.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2004/mangrove-extent-2004.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2005/mangrove-extent-2005.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2006/mangrove-extent-2006.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2007/mangrove-extent-2007.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2008/mangrove-extent-2008.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2009/mangrove-extent-2009.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2010/mangrove-extent-2010.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2011/mangrove-extent-2011.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2012/mangrove-extent-2012.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2013/mangrove-extent-2013.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2014/mangrove-extent-2014.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2015/mangrove-extent-2015.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2016/mangrove-extent-2016.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "./mangrove-extent-2017/mangrove-extent-2017.json",
+      "type": "application/geo+json"
+    },
+    {
       "rel": "parent",
       "href": "../catalog.json",
       "type": "application/json",
@@ -123,7 +198,7 @@
       "interval": [
         [
           "1985-01-01T00:00:00Z",
-          "2002-01-01T00:00:00Z"
+          "2017-01-01T00:00:00Z"
         ]
       ]
     }
