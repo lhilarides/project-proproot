@@ -3,6 +3,7 @@ import { TerraDraw, TerraDrawPolygonMode, TerraDrawSelectMode } from 'terra-draw
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter';
 import maplibregl from 'maplibre-gl';
 import { initDuckDB, queryParquet } from '../services/DuckDBService';
+import { Database } from 'lucide-react';
 
 interface DrawControlsProps {
   map: maplibregl.Map | null;
@@ -212,9 +213,31 @@ export default function DrawControls({ map, year, onCacheOffline, downloadState 
 
   return (
     <div className="draw-controls" style={{ position: 'absolute', bottom: 30, right: 10, zIndex: 10, background: 'rgba(15, 23, 42, 0.9)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '220px' }}>
-      <h3 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 600, letterSpacing: '1px' }}>Map Tools</h3>
+      <h3 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 600, letterSpacing: '1px' }}>Data Tools</h3>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        <a
+          href="https://radiantearth.github.io/stac-browser/#/external/storage.googleapis.com/gmw-mvp-datalake-project-proproot/stac/catalog.json"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            background: 'rgba(56, 189, 248, 0.1)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            color: '#38bdf8',
+            textDecoration: 'none',
+            padding: '8px 12px',
+            borderRadius: 8,
+            fontSize: '0.8rem',
+            fontWeight: 500,
+            transition: 'all 0.2s',
+          }}
+        >
+          <Database size={14} /> Browse STAC Catalog
+        </a>
         {onCacheOffline && (
           <button 
             onClick={onCacheOffline} 

@@ -113,7 +113,72 @@ def main():
         extent_collection.extent.spatial = pystac.SpatialExtent([global_bbox])
         extent_collection.extent.temporal = pystac.TemporalExtent([[min_date, max_date]])
 
-    # 4. Save Catalog
+    # 4. Create Mangrove Alerts Collection via DuckDB
+    import duckdb
+    print("Processing Alerts Parquet via DuckDB...")
+    try:
+        duckdb.execute("INSTALL httpfs; LOAD httpfs;")
+        parquet_url = BASE_URL + "parquets/gmw-alerts-latest.parquet"
+        res = duckdb.execute(f"SELECT MIN(first_obs_date), MAX(first_obs_date) FROM read_parquet('{parquet_url}')").fetchone()
+        
+        min_alert_date = datetime.strptime(str(res[0])[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        max_alert_date = datetime.strptime(str(res[1])[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        
+        alerts_collection = pystac.Collection(
+            id="mangrove-alerts",
+            title="Mangrove Loss Alerts Database",
+            description="Global Mangrove Watch Loss Alerts. Cloud-native Parquet and PMTiles containing all recorded loss alerts.",
+            extent=pystac.Extent(
+                spatial=pystac.SpatialExtent([[-180.0, -40.0, 180.0, 40.0]]),
+                temporal=pystac.TemporalExtent([[min_alert_date, max_alert_date]])
+            )
+        )
+        
+        alerts_item = pystac.Item(
+            id="mangrove-alerts-latest",
+            geometry={
+                "type": "Polygon",
+                "coordinates": [[
+                    [-180.0, -40.0],
+                    [180.0, -40.0],
+                    [180.0, 40.0],
+                    [-180.0, 40.0],
+                    [-180.0, -40.0]
+                ]]
+            },
+            bbox=[-180.0, -40.0, 180.0, 40.0],
+            datetime=max_alert_date,
+            properties={
+                "start_datetime": min_alert_date.isoformat(),
+                "end_datetime": max_alert_date.isoformat()
+            }
+        )
+        
+        alerts_item.add_asset(
+            key="parquet",
+            asset=pystac.Asset(
+                href=parquet_url,
+                media_type="application/vnd.apache.parquet",
+                roles=["data"]
+            )
+        )
+        
+        pmtiles_url = BASE_URL + "pmtiles/gmw-alerts-latest.pmtiles"
+        alerts_item.add_asset(
+            key="pmtiles",
+            asset=pystac.Asset(
+                href=pmtiles_url,
+                media_type="application/vnd.pmtiles",
+                roles=["visual"]
+            )
+        )
+        
+        alerts_collection.add_item(alerts_item)
+        catalog.add_child(alerts_collection)
+    except Exception as e:
+        print(f"Failed to process alerts with duckdb: {e}")
+
+    # 5. Save Catalog
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'stac')
     print(f"\nSaving STAC Catalog to {output_dir}")
     catalog.normalize_hrefs(output_dir)

@@ -15,6 +15,12 @@
       "href": "./mangrove-extent/collection.json",
       "type": "application/json",
       "title": "Mangrove Extent v4 (1985-2025)"
+    },
+    {
+      "rel": "child",
+      "href": "./mangrove-alerts/collection.json",
+      "type": "application/json",
+      "title": "Mangrove Loss Alerts Database"
     }
   ],
   "title": "GMW v4 STAC Catalog"

@@ -1,0 +1,81 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [],
+  "id": "mangrove-alerts-latest",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -180.0,
+          -40.0
+        ],
+        [
+          180.0,
+          -40.0
+        ],
+        [
+          180.0,
+          40.0
+        ],
+        [
+          -180.0,
+          40.0
+        ],
+        [
+          -180.0,
+          -40.0
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    -180.0,
+    -40.0,
+    180.0,
+    40.0
+  ],
+  "properties": {
+    "start_datetime": "2019-01-30T00:00:00+00:00",
+    "end_datetime": "2026-05-31T00:00:00+00:00",
+    "datetime": "2026-05-31T00:00:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../../catalog.json",
+      "type": "application/json",
+      "title": "GMW v4 STAC Catalog"
+    },
+    {
+      "rel": "collection",
+      "href": "../collection.json",
+      "type": "application/json",
+      "title": "Mangrove Loss Alerts Database"
+    },
+    {
+      "rel": "parent",
+      "href": "../collection.json",
+      "type": "application/json",
+      "title": "Mangrove Loss Alerts Database"
+    }
+  ],
+  "assets": {
+    "parquet": {
+      "href": "https://storage.googleapis.com/gmw-mvp-datalake-project-proproot/parquets/gmw-alerts-latest.parquet",
+      "type": "application/vnd.apache.parquet",
+      "roles": [
+        "data"
+      ]
+    },
+    "pmtiles": {
+      "href": "https://storage.googleapis.com/gmw-mvp-datalake-project-proproot/pmtiles/gmw-alerts-latest.pmtiles",
+      "type": "application/vnd.pmtiles",
+      "roles": [
+        "visual"
+      ]
+    }
+  },
+  "collection": "mangrove-alerts"
+}
