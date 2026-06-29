@@ -1,6 +1,6 @@
-# Global Mangrove Watch MVP
+# Global Mangrove Watch serverless API and Frontend MVP
 
-This project is a React-based web application providing dynamic spatial visualization and analytics for the Global Mangrove Watch (GMW) Version 4 dataset. It features interactive maps (MapLibre GL JS), timeline exploration of Cloud Optimized GeoTIFFs via STAC metadata, and in-browser analytical processing using DuckDB-WASM on Parquet datasets.
+This project is a proof-of-conecpt for a React-based web application providing dynamic spatial visualization and analytics for the Global Mangrove Watch (GMW) Version 4 dataset. It features interactive maps (MapLibre GL JS), timeline exploration of rasterdata (Cloud Optimized GeoTIFFs) and vectordata (Parquet/PMTiles) via STAC metadata, and in-browser analytical processing using DuckDB-WASM with a capability of taking subsets of data offline
 
 ## Architecture & Features
 - **Frontend**: React, Vite, TypeScript, MapLibre GL JS
